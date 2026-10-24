@@ -5,6 +5,7 @@ const userModel = require("../models/user.model")
 const aiService = require("../services/ai.service")
 const messageModel = require("../models/message.model");
 const { model } = require("mongoose");
+const { createMemory, queryMemory } = require("../services/vector.service")
 
 
 function initSocketServer(httpServer) { //fn that consist basic setup of  socketio
@@ -38,19 +39,37 @@ function initSocketServer(httpServer) { //fn that consist basic setup of  socket
                 content: "text message"
             }
              */
-             console.log(messagePayload);
-
-            //saving user messsage
-            await messageModel.create({
+            // saving user messsage
+           const message =  await messageModel.create({
                 chat:messagePayload.chat,
                 user: socket.user._id,
                 content: messagePayload.content,
                 role: "user"
-            })   
+            })  
+            
+            const vectors = await aiService.generateVector(messagePayload.content)
+            await createMemory({
+                vectors,
+                messageId: message._id,
+                metadata: {
+                    chat: messagePayload.chat,
+                    user: socket.user._id,
+                    text: messagePayload.content
+                }
+            })
+
+            const memory = await queryMemory({
+                queryVector: vectors,
+                limit: 3,
+                metadata: {}
+            })
+            
+            console.log(memory);
+            
             //chat hisstory(short term memory)
             const chatHistory = (await messageModel.find({
                 chat: messagePayload.chat
-            }).sort({ createdAt: -1}).limit(20).lean()).reverse()
+            }).sort({ createdAt: -1}).limit(20).lean()).reverse() //limit   
             
             const response = await aiService.generateResponse( chatHistory.map(item => {
                 return {
@@ -59,13 +78,25 @@ function initSocketServer(httpServer) { //fn that consist basic setup of  socket
                 }
             }))
 
-            //saving Ai response
-            await messageModel.create({
-                chat:messagePayload.chat,
+            // saving Ai response
+           const responseMessage =  await messageModel.create({
+                chat: messagePayload.chat,
                 user: socket.user._id,
                 content: response,
                 role: "model"
             })
+
+            const responseVector = await aiService.generateVector(response)
+            await createMemory({
+                vectors: responseVector,
+                messageId: responseMessage._id,
+                metadata:{
+                    chat: messagePayload.chat,
+                    user: socket.user._id,
+                    text: response
+                }
+            })
+            
 
             socket.emit('ai-response', {
                 content: response,
