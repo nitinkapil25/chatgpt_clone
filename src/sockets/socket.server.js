@@ -39,15 +39,23 @@ function initSocketServer(httpServer) { //fn that consist basic setup of  socket
                 content: "text message"
             }
              */
-            // saving user messsage
+            // saving user messsage in db
            const message =  await messageModel.create({
                 chat:messagePayload.chat,
                 user: socket.user._id,
                 content: messagePayload.content,
                 role: "user"
             })  
-            
+            //generating vectors
             const vectors = await aiService.generateVector(messagePayload.content)
+
+             const memory = await queryMemory({
+                queryVector: vectors,
+                limit: 3,
+                metadata: {}
+            })
+
+            //storing vectors
             await createMemory({
                 vectors,
                 messageId: message._id,
@@ -58,19 +66,13 @@ function initSocketServer(httpServer) { //fn that consist basic setup of  socket
                 }
             })
 
-            const memory = await queryMemory({
-                queryVector: vectors,
-                limit: 3,
-                metadata: {}
-            })
-            
-            console.log(memory);
             
             //chat hisstory(short term memory)
             const chatHistory = (await messageModel.find({
                 chat: messagePayload.chat
-            }).sort({ createdAt: -1}).limit(20).lean()).reverse() //limit   
-            
+            }).sort({ createdAt: -1}).limit(20).lean()).reverse() //limit  
+             
+            //generating Ai response
             const response = await aiService.generateResponse( chatHistory.map(item => {
                 return {
                     role: item.role,
@@ -85,8 +87,9 @@ function initSocketServer(httpServer) { //fn that consist basic setup of  socket
                 content: response,
                 role: "model"
             })
-
+            //generating vectors
             const responseVector = await aiService.generateVector(response)
+            //storing vectors
             await createMemory({
                 vectors: responseVector,
                 messageId: responseMessage._id,
