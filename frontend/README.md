@@ -15,6 +15,15 @@ React + Vite frontend for the existing Express and Socket.IO backend.
 
 The frontend reads `VITE_API_BASE_URL` as the backend origin. Production is configured to use `https://chatgpt-clone-zqlu.onrender.com`; REST requests add `/api` once, and Socket.IO connects to the same origin at `/socket.io`. Set `VITE_API_BASE_URL` in the environment when building for another backend. Cookie authentication remains enabled for both requests and the socket connection.
 
+For a single Express deployment, use these commands from the repository root:
+
+```sh
+npm ci --prefix frontend && npm ci --prefix backend && npm --prefix backend run build
+npm --prefix backend start
+```
+
+The build uses same-origin mode and copies `frontend/dist` into `backend/public`. API and Socket.IO traffic then use the same host as the page. The server listens on the hosting platform's `PORT` value when provided.
+
 ## Backend features used
 
 - `POST /api/auth/register` with `{ fullName: { firstName, lastName }, email, password }`

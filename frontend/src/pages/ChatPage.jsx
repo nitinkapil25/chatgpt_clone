@@ -182,7 +182,7 @@ export default function ChatPage() {
   }, [activeChatId, messagesByChat, messagesLoadRetry, navigate, signOut])
 
   useEffect(() => {
-    const client = io(BACKEND_URL, {
+    const client = io(BACKEND_URL || window.location.origin, {
       path: '/socket.io',
       autoConnect: false,
       withCredentials: true,

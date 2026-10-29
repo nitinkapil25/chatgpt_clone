@@ -8,7 +8,7 @@ connectDb()
 initSocketServer(httpServer)//wahi HTTP server Socket.IO ko diya.
 
 
-httpServer.listen(3000, ()=>{
+httpServer.listen(process.env.PORT || 3000, ()=>{
     console.log("server is live");
     
 })
