@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { BACKEND_URL } from '../backend-config'
 import { useAuth } from '../auth/useAuth'
 import MessageContent from '../components/MessageContent'
 import OpenAILogo from '../components/OpenAILogo'
@@ -181,7 +182,7 @@ export default function ChatPage() {
   }, [activeChatId, messagesByChat, messagesLoadRetry, navigate, signOut])
 
   useEffect(() => {
-    const client = io(window.location.origin, {
+    const client = io(BACKEND_URL, {
       path: '/socket.io',
       autoConnect: false,
       withCredentials: true,

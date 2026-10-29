@@ -13,7 +13,7 @@ React + Vite frontend for the existing Express and Socket.IO backend.
    npm run dev
    ```
 
-The Vite dev server proxies `/api` and `/socket.io` to `http://localhost:3000`. This keeps cookie authentication on the same browser origin during development.
+The frontend reads `VITE_API_BASE_URL` as the backend origin. Production is configured to use `https://chatgpt-clone-zqlu.onrender.com`; REST requests add `/api` once, and Socket.IO connects to the same origin at `/socket.io`. Set `VITE_API_BASE_URL` in the environment when building for another backend. Cookie authentication remains enabled for both requests and the socket connection.
 
 ## Backend features used
 

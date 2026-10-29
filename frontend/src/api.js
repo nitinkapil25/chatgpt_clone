@@ -1,7 +1,8 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+import { API_BASE_URL } from './backend-config'
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const normalizedPath = `/${path.replace(/^\/+/, '')}`
+  const response = await fetch(`${API_BASE_URL}${normalizedPath}`, {
     ...options,
     credentials: 'include',
     headers: {
