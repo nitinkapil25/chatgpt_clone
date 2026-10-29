@@ -27,14 +27,22 @@ async function queryMemory({queryVector, limit = 5, metadata}) {
     const data = await gptCloneIndex.query({
         vector: queryVector,
         topK: limit,
-        filter: metadata ? { metadata }: undefined,
+        filter: metadata ? metadata: undefined,
         includeMetadata: true
     })
 
     return data.matches
 }
 
+async function deleteMemoriesByIds(ids) {
+    const uniqueIds = [...new Set(ids.map(String))]
+    for (let offset = 0; offset < uniqueIds.length; offset += 1000) {
+        await gptCloneIndex.deleteMany({ ids: uniqueIds.slice(offset, offset + 1000) })
+    }
+}
+
 module.exports = {
     createMemory,
-    queryMemory
+    queryMemory,
+    deleteMemoriesByIds
 }

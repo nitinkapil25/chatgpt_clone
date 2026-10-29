@@ -2,6 +2,14 @@ const userModel = require("../models/user.model")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 
+const configuredSameSite = (process.env.AUTH_COOKIE_SAME_SITE || "lax").toLowerCase()
+const authCookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" || configuredSameSite === "none",
+    sameSite: ["strict", "lax", "none"].includes(configuredSameSite) ? configuredSameSite : "lax",
+    path: "/"
+}
+
 //register controller
 async function registerUser(req,res) {
 
@@ -29,7 +37,7 @@ async function registerUser(req,res) {
     const token = jwt.sign({id: user._id}, process.env.JWT_SECRET)
 
     //save token in cookie
-    res.cookie("token", token)
+    res.cookie("token", token, authCookieOptions)
 
     res.status(201).json({
         message: "user registered successfully",
@@ -59,7 +67,7 @@ async function loginUser(req,res) {
     }
     // if everything is good then generate token and save in cookies
     const token = jwt.sign({id: user._id}, process.env.JWT_SECRET)
-    res.cookie("token", token)
+    res.cookie("token", token, authCookieOptions)
 
     res.status(200).json({
         message: "user loggedIn successfully",
@@ -71,7 +79,13 @@ async function loginUser(req,res) {
     })
 }
 
+function logoutUser(req, res) {
+    res.clearCookie("token", authCookieOptions)
+    return res.status(200).json({ message: "logged out successfully" })
+}
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser
 }
